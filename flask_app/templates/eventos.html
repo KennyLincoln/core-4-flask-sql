@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Eventos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Bienvenido/a, {{ usuario.nombre }}</h1>
+        <div>
+            <a href="/nuevo" class="btn btn-link">Crear Evento</a>
+            <a href="/logout" class="btn btn-link text-danger">Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>Evento</th>
+                <th>Ubicación</th>
+                <th>Fecha</th>
+                <th>Publicado por</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for evento in eventos %}
+            <tr>
+                <td>{{ evento.nombre_evento }}</td>
+                <td>{{ evento.ubicacion }}</td>
+                <td>{{ evento.fecha }}</td>
+                <td>{{ evento.organizador }}</td>
+                <td>
+                    <a href="/ver/{{ evento.id }}">Ver</a>
+                    {% if evento.usuario_id == session['usuario_id'] %}
+                        | <a href="/editar/{{ evento.id }}">Editar</a>
+                        | <a href="/borrar/{{ evento.id }}">Borrar</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="text-center">No hay eventos registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
