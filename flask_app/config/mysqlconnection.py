@@ -1,40 +1,41 @@
-import pymysql.cursors #Utilizamos un cursos para interactuar con BD
-class MySQLConnection: #Clase que permite generar instancia de conexión con BD
-    def __init__(self, db):
-        connection = pymysql.connect(host = '127.0.0.1',
-                                    user = 'root', # Cambia el usuario y contraseña
-                                    password = 'root', 
-                                    db = db,
-                                    charset = 'utf8mb4',
-                                    cursorclass = pymysql.cursors.DictCursor,
-                                    autocommit = True)
-        self.connection = connection #Establecemos conexión con BD
-    #El método que se encarga de la consulta    
+import os
+
+import pymysql.cursors
+
+
+class MySQLConnection:
+    """Crea una conexión MySQL usando variables de entorno."""
+
+    def __init__(self, db=None):
+        database = db or os.getenv("MYSQL_DATABASE")
+        if not database:
+            raise ValueError("Define MYSQL_DATABASE antes de iniciar la aplicación.")
+
+        self.connection = pymysql.connect(
+            host=os.getenv("MYSQL_HOST", "127.0.0.1"),
+            user=os.getenv("MYSQL_USER", "root"),
+            password=os.getenv("MYSQL_PASSWORD", ""),
+            db=database,
+            charset="utf8mb4",
+            cursorclass=pymysql.cursors.DictCursor,
+            autocommit=True,
+        )
+
     def query_db(self, query, data=None):
-        with self.connection.cursor() as cursor:
-            try:
-                query = cursor.mogrify(query, data)
-                print("Running Query:", query)
-     
+        try:
+            with self.connection.cursor() as cursor:
                 executable = cursor.execute(query, data)
-                if query.lower().find("insert") >= 0:
-                    # La consulta INSERT regresan el id del nuevo registro
-                    self.connection.commit()
+                if query.lstrip().lower().startswith("insert"):
                     return cursor.lastrowid
-                elif query.lower().find("select") >= 0:
-                    # La consulta SELECT regresa una LISTA DE DICCIONARIOS con los datos
-                    result = cursor.fetchall()
-                    return result
-                else:
-                    # UPDATE y DELETE no regresan nada
-                    self.connection.commit()
-            except Exception as e:
-                # En caso de alguna falla, regresa FALSE
-                print("Something went wrong", e)
-                return False
-            finally:
-                # Cerramos conexión
-                self.connection.close() 
-# connectToMySQL recibe el nombre de la base de datos y genera una instancia de MySQLConnection
-def connectToMySQL(db):
+                if query.lstrip().lower().startswith("select"):
+                    return cursor.fetchall()
+                return executable
+        except Exception as exc:
+            print("Error al ejecutar la consulta:", exc)
+            return False
+        finally:
+            self.connection.close()
+
+
+def connectToMySQL(db=None):
     return MySQLConnection(db)
